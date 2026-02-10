@@ -1,0 +1,158 @@
+version: '3.8'
+
+services:
+  # MySQL Database for Auth Service
+  auth-db:
+    image: mysql:8.0
+    container_name: retail-auth-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: retail_auth_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - auth-db-volume:/var/lib/mysql
+    networks:
+      - retail-network
+
+  # MySQL Database for Product Service
+  product-db:
+    image: mysql:8.0
+    container_name: retail-product-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: retail_product_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - product-db-volume:/var/lib/mysql
+    networks:
+      - retail-network
+
+  # MySQL Database for Order Service
+  order-db:
+    image: mysql:8.0
+    container_name: retail-order-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: retail_order_db
+    ports:
+      - "3308:3306"
+    volumes:
+      - order-db-volume:/var/lib/mysql
+    networks:
+      - retail-network
+
+  # MySQL Database for Payment Service
+  payment-db:
+    image: mysql:8.0
+    container_name: retail-payment-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: retail_payment_db
+    ports:
+      - "3309:3306"
+    volumes:
+      - payment-db-volume:/var/lib/mysql
+    networks:
+      - retail-network
+
+  # Auth Service
+  auth-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.auth
+    container_name: retail-auth-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://auth-db:3306/retail_auth_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    ports:
+      - "8081:8081"
+    depends_on:
+      - auth-db
+    networks:
+      - retail-network
+
+  # Product Service
+  product-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.product
+    container_name: retail-product-service
+    environment:
+      DB_HOST: product-db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: retail_product_db
+      PORT: 8082
+    ports:
+      - "8082:8082"
+    depends_on:
+      - product-db
+    networks:
+      - retail-network
+
+  # Order Service
+  order-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.order
+    container_name: retail-order-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://order-db:3306/retail_order_db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    ports:
+      - "8083:8083"
+    depends_on:
+      - order-db
+    networks:
+      - retail-network
+
+  # Payment Service
+  payment-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.payment
+    container_name: retail-payment-service
+    environment:
+      DB_HOST: payment-db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: root
+      DB_NAME: retail_payment_db
+      PORT: 8084
+    ports:
+      - "8084:8084"
+    depends_on:
+      - payment-db
+    networks:
+      - retail-network
+
+  # Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    container_name: retail-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth-service
+      - product-service
+      - order-service
+      - payment-service
+    networks:
+      - retail-network
+
+networks:
+  retail-network:
+    driver: bridge
+
+volumes:
+  auth-db-volume:
+  product-db-volume:
+  order-db-volume:
+  payment-db-volume:
