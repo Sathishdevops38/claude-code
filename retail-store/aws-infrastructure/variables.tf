@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "AWS region"
   type        = string
-  default     = "us-east-1"
+  default     = "us-west-2"
 }
 
 variable "environment" {
@@ -51,13 +51,13 @@ variable "db_password" {
 variable "node_group_desired_size" {
   description = "Desired number of EKS nodes"
   type        = number
-  default     = 2
+  default     = 5
 }
 
 variable "node_group_max_size" {
   description = "Maximum number of EKS nodes"
   type        = number
-  default     = 5
+  default     = 10
 }
 
 variable "node_group_min_size" {
@@ -69,11 +69,11 @@ variable "node_group_min_size" {
 variable "node_instance_types" {
   description = "Instance types for EKS nodes"
   type        = list(string)
-  default     = ["t3.medium"]
+  default     = ["t3.micro"]
 }
 
 variable "kubernetes_version" {
   description = "Kubernetes version for EKS cluster"
   type        = string
-  default     = "1.28"
+  default     = "1.33"
 }

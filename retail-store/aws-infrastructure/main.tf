@@ -65,6 +65,41 @@ resource "aws_ecr_repository" "services" {
   }
 }
 
+
+resource "null_resource" "push_all_images" {
+  for_each = toset([
+    "auth-service",
+    "product-service",
+    "order-service",
+    "payment-service",
+    "frontend"
+  ])
+
+  depends_on = [aws_ecr_repository.services]
+
+  triggers = {
+    # Rebuild if the specific Dockerfile or the app code changes
+    dockerfile_hash = filemd5("${path.module}/../docker/Dockerfile.${replace(each.value, "-service", "")}")
+  }
+
+  provisioner "local-exec" {
+    command = <<EOT
+      # 1. Authenticate Podman/Docker to ECR
+      aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
+
+      # 2. Build using the specific Dockerfile naming convention
+      # We strip "-service" from the name if your files are named Dockerfile.product, etc.
+      docker build \
+        -f ../docker/Dockerfile.${replace(each.value, "-service", "")} \
+        -t ${aws_ecr_repository.services[each.value].repository_url}:latest \
+        ../microservices/${each.value}/
+
+      # 3. Push to ECR
+      docker push ${aws_ecr_repository.services[each.value].repository_url}:latest
+    EOT
+  }
+}
+
 # VPC
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
@@ -458,7 +493,7 @@ resource "aws_cloudwatch_metric_alarm" "eks_node_cpu" {
   alarm_description   = "Alert when EKS node CPU is high"
 
   dimensions = {
-    AutoScalingGroupName = aws_eks_node_group.main.resources[0].auto_scaling_groups[0].name
+    AutoScalingGroupName = aws_eks_node_group.main.resources[0].autoscaling_groups[0].name
   }
 }
 
