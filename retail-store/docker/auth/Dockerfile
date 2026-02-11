@@ -7,7 +7,7 @@ RUN mvn dependency:download-sources
 COPY auth-service .
 RUN mvn clean package -DskipTests
 
-FROM openjdk:17-jdk-slim
+FROM amazoncorretto:17-al2023-jdk
 
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
