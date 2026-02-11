@@ -18,7 +18,7 @@ resource "kubernetes_config_map" "database_config" {
   }
 
   data = {
-    "DB_HOST"     = aws_rds_cluster.main.endpoint
+    "DB_HOST"     = aws_db_instance.main.address
     "DB_PORT"     = "3306"
     "DB_USER"     = var.db_username
     "DB_DATABASE" = "retaildb"
@@ -92,7 +92,7 @@ resource "kubernetes_deployment" "auth_service" {
 
           env {
             name = "SPRING_DATASOURCE_URL"
-            value = "jdbc:mysql://${aws_rds_cluster.main.endpoint}:3306/retaildb"
+            value = "jdbc:mysql://${aws_db_instance.main.endpoint}:3306/retaildb"
           }
 
           env {
@@ -357,7 +357,7 @@ resource "kubernetes_deployment" "order_service" {
 
           env {
             name = "SPRING_DATASOURCE_URL"
-            value = "jdbc:mysql://${aws_rds_cluster.main.endpoint}:3306/retaildb"
+            value = "jdbc:mysql://${aws_db_instance.main.endpoint}:3306/retaildb"
           }
 
           env {

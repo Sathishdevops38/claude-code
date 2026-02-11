@@ -84,17 +84,16 @@ resource "null_resource" "push_all_images" {
 
   provisioner "local-exec" {
     command = <<EOT
-      # 1. Authenticate Podman/Docker to ECR
+      
       aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
 
-      # 2. Build using the specific Dockerfile naming convention
-      # We strip "-service" from the name if your files are named Dockerfile.product, etc.
+      
       docker build \
         -f ../docker/Dockerfile.${replace(each.value, "-service", "")} \
         -t ${aws_ecr_repository.services[each.value].repository_url}:latest \
         ../microservices/${each.value}/
 
-      # 3. Push to ECR
+     
       docker push ${aws_ecr_repository.services[each.value].repository_url}:latest
     EOT
   }
@@ -250,21 +249,40 @@ resource "aws_security_group" "rds" {
   }
 }
 
-resource "aws_rds_cluster" "main" {
-  cluster_identifier      = "${var.app_name}-db-cluster"
-  engine                  = "aurora-mysql"
-  engine_version          = "8.0.mysql_aurora.3.02.0"
-  database_name           = "retaildb"
-  master_username         = var.db_username
-  master_password         = var.db_password
-  skip_final_snapshot     = true
-  db_subnet_group_name    = aws_db_subnet_group.main.name
-  vpc_security_group_ids  = [aws_security_group.rds.id]
+resource "aws_db_instance" "main" {
+  identifier           = "${var.app_name}-db"
+  allocated_storage    = 20
+  db_name              = "retaildb"
+  engine               = "mysql"
+  engine_version       = "8.0"
+  instance_class       = "db.t3.micro" # Free Tier eligible
+  username             = var.db_username
+  password             = var.db_password
+  parameter_group_name = "default.mysql8.0"
+  skip_final_snapshot  = true
+  db_subnet_group_name = aws_db_subnet_group.main.name
+  vpc_security_group_ids = [aws_security_group.rds.id]
 
   tags = {
-    Name = "${var.app_name}-db-cluster"
+    Name = "${var.app_name}-db"
   }
 }
+
+# resource "aws_rds_cluster" "main" {
+#   cluster_identifier      = "${var.app_name}-db-cluster"
+#   engine                  = "aurora-mysql"
+#   engine_version          = "8.0.mysql_aurora.3.02.0"
+#   database_name           = "retaildb"
+#   master_username         = var.db_username
+#   master_password         = var.db_password
+#   skip_final_snapshot     = true
+#   db_subnet_group_name    = aws_db_subnet_group.main.name
+#   vpc_security_group_ids  = [aws_security_group.rds.id]
+
+#   tags = {
+#     Name = "${var.app_name}-db-cluster"
+#   }
+# }
 
 # EKS Cluster
 resource "aws_iam_role" "eks_cluster_role" {

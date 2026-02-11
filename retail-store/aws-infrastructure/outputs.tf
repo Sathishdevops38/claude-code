@@ -41,15 +41,15 @@ output "eks_node_group_status" {
   value       = aws_eks_node_group.main.status
 }
 
-output "rds_cluster_endpoint" {
-  description = "RDS cluster endpoint"
-  value       = aws_rds_cluster.main.endpoint
+output "rds_instance_endpoint" {
+  description = "RDS instance endpoint"
+  value       = aws_db_instance.main.address
 }
 
-output "rds_reader_endpoint" {
-  description = "RDS cluster reader endpoint"
-  value       = aws_rds_cluster.main.reader_endpoint
-}
+# output "rds_reader_endpoint" {
+#   description = "RDS cluster reader endpoint"
+#   value       = aws_db_instance.main.reader_endpoint
+# }
 
 output "s3_bucket_name" {
   description = "S3 bucket name for frontend"
